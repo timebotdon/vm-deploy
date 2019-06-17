@@ -1,0 +1,9 @@
+googlechrome
+sysmon
+nxlog
+7zip.install
+adobereader
+officeproplus2013
+flashplayerplugin
+dotnet4.5.2
+notepadplusplus
