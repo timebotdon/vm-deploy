@@ -1,0 +1,16 @@
+googlechrome
+sysmon
+nxlog
+7zip.install
+adobereader
+officeproplus2013
+flashplayerplugin
+dotnet4.5.2
+notepadplusplus
+javaruntime
+putty.install
+winscp
+git
+curl
+python2
+python3

@@ -76,7 +76,7 @@ Function checkChoco {
 
 Function installSoftware {
 	checkChoco
-	$softwareList = read-host -Prompt "Provide Software list path"
+	$softwareList = read-host -Prompt "Provide Software list path."
 	foreach ($item in gc $software) {
 		Write-Output "$item"
 	}
