@@ -52,13 +52,6 @@ Function setNetworking {
 }
 
 
-Function joinDomain {
-	$domainName = read-host -Prompt "Domain Name?"
-	Add-Computer –DomainName $domainName –Credential (Get-Credential)
-	menu
-}
-
-
 ## Package Management
 
 Function checkChoco {
@@ -74,18 +67,33 @@ Function checkChoco {
 }
 
 
+## Domain
+
+Function joinDomain {
+	$domainName = read-host -Prompt "Domain Name?"
+	Add-Computer –DomainName $domainName –Credential (Get-Credential)
+	menu
+}
+
+
+
 Function installSoftware {
 	checkChoco
 	$softwareList = read-host -Prompt "Provide Software list path."
-	foreach ($item in gc $software) {
+	Write-host
+	Write-host === List Start ===
+	Write-host Software names are referenced from Chocolatey repo.
+	foreach ($item in gc "$softwareList") {
 		Write-Output "$item"
 	}
+	Write-host === List End ===
+	Write-host
 	Write-Output "Is this list provided correct?"
 	$confirm2 = read-host -Prompt "(y/n)"
 	if ($confirm -eq "y") {
 		Write-Output "Commencing software install.."
 		foreach ($item in gc $software) {
-			choco install "$item"
+			choco install -y "$item" 
 			Write-Output "Installing $item."
 		}
 		Write-Host "Installation complete."
@@ -94,17 +102,20 @@ Function installSoftware {
 		Restart-Computer
 	}
 	else {
+		Write-host Return to menu.
 		menu
 	}
 }
 
 
 function menu {
+	Write-host 
 	Write-host "Script for quick deployment of new virtual machines. Installs software using Chocolatey package manager."
 	Write-host "1. Configure networking"
 	Write-host "2. Install software"
 	Write-host "3. Join Domain"
 	Write-host "0. Exit"
+	Write-host
 	$menuCh = read-host -Prompt "Choose an option."
 	
 	if ($menuCh -eq "1") {
