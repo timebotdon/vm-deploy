@@ -2,7 +2,7 @@
 function elevateUAC {
 	if (!([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]'Administrator')) {
 		Write-Host "This script requires administrator rights. Auto elevating in 5 seconds.."
-		timeout /t 5 /nobreak
+		Start-Sleep 5
 		Start-Process powershell.exe -ArgumentList ("-NoProfile -ExecutionPolicy Bypass -File `"{0}`"" -f $PSCommandPath) -Verb RunAs
 		exit
 	}
@@ -25,10 +25,11 @@ Function setNetworking {
 			Write-host "Testing network connection.."
 			ping $gateway
 			if ($lastexitcode -eq "0") {
-				Write-host "Test successful, network is ready."
+				Write-host "Ping test successful."
 			}
 			else {
 				Write-host "Connection Error. Please check network settings / firewall rules!"
+				menu
 			}
 		}
 	}
@@ -41,31 +42,16 @@ Function setNetworking {
 			Write-host "Testing network connection.."
 			ping $gateway
 			if ($lastexitcode -eq "0") {
-				Write-host "Test successful, network is ready."
+				Write-host "Ping test successful."
 			}
 			else {
 				Write-host "Connection Error. Please check network settings / firewall rules!"
+				menu
 			}
 		}
 	}
 	menu
 }
-
-
-## Package Management
-
-Function checkChoco {
-	Write-Host "Checking if chocolatey is installed."
-	choco --version
-	if ($lastexitcode -eq "0") {
-		write-host "Chocolatey is installed!"
-	} 
-	else {
-		Write-Host "Chocolatey is NOT installed. Running choco install script."
-		Set-ExecutionPolicy Bypass -Scope Process -Force; iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
-	}
-}
-
 
 ## Domain
 
@@ -75,18 +61,36 @@ Function joinDomain {
 	menu
 }
 
-
+## Package Management
+Function checkChoco {
+	Write-Host "Checking if chocolatey is installed."
+	choco --version
+	if ($lastexitcode -eq "0") {
+		write-host "Chocolatey is installed!"
+	} 
+	else {
+		Write-Host "Chocolatey is NOT installed. Running choco install script."
+		$chocInstall = Read-host -Prompt "Chocolatey is required for the rest of this proocedure. Do you want to install Chocolatey now? (y/n)"
+		if ($chocInstall -eq "y") {
+			Set-ExecutionPolicy Bypass -Scope Process -Force; iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
+		}
+		else {
+			Write-Host "Chcolatey is required to install packages! Returning to menu."
+			menu
+		}
+	}
+}
 
 Function installSoftware {
 	checkChoco
 	$softwareList = read-host -Prompt "Provide Software list path."
 	Write-host
-	Write-host === List Start ===
-	Write-host Software names are referenced from Chocolatey repo.
+	Write-host "=== List Start ==="
+	Write-host "Software names are referenced from the Chocolatey repo."
 	foreach ($item in gc "$softwareList") {
 		Write-Output "$item"
 	}
-	Write-host === List End ===
+	Write-host "=== List End ==="
 	Write-host
 	Write-Output "Is this list provided correct?"
 	$confirm2 = read-host -Prompt "(y/n)"
@@ -102,7 +106,7 @@ Function installSoftware {
 		Restart-Computer
 	}
 	else {
-		Write-host Return to menu.
+		Write-host "Return to menu."
 		menu
 	}
 }
