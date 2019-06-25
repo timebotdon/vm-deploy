@@ -19,8 +19,8 @@ Function setNetworking {
 		$ip = read-host -Prompt "IP Address"
 		$netmask = read-host -Prompt "Netmask"
 		$gateway = read-host -Prompt "Gateway Address"
-		$confirm = read-host -Prompt "Confirm? (y/n)"
-		if ($confirm -eq "y") {
+		$netConfirmS = read-host -Prompt "Confirm? (y/n)"
+		if ($netConfirmS -eq "y") {
 			netsh interface ip set address name="$interface" static $ip $netmask $gateway
 			Write-host "Testing network connection.."
 			ping $gateway
@@ -36,8 +36,8 @@ Function setNetworking {
 	if ($networkCh -eq "d") {
 		Get-WmiObject win32_networkadapter -filter "netconnectionstatus = 2" | select Name
 		$interface = read-host -Prompt "Interface Name"
-		$confirm = read-host -Prompt "Confirm? (y/n)"
-		if ($confirm -eq "y") {
+		$netConfirmD = read-host -Prompt "Confirm? (y/n)"
+		if ($netConfirmD -eq "y") {
 			netsh interface ip set address "$interface" dhcp
 			Write-host "Testing network connection.."
 			ping $gateway
@@ -85,16 +85,16 @@ Function installSoftware {
 	checkChoco
 	$softwareList = read-host -Prompt "Provide Software list path."
 	Write-host
-	Write-host "=== List Start ==="
 	Write-host "Software names are referenced from the Chocolatey repo."
+	Write-host "=== List Start ==="
 	foreach ($item in gc "$softwareList") {
 		Write-Output "$item"
 	}
 	Write-host "=== List End ==="
 	Write-host
 	Write-Output "Is this list provided correct?"
-	$confirm2 = read-host -Prompt "(y/n)"
-	if ($confirm -eq "y") {
+	$chocConfirm = read-host -Prompt "(y/n)"
+	if ($chocConfirm -eq "y") {
 		Write-Output "Commencing software install.."
 		foreach ($item in gc $software) {
 			choco install -y "$item" 
