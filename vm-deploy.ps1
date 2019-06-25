@@ -83,8 +83,11 @@ Function checkChoco {
 
 Function installSoftware {
 	checkChoco
-	$softwareList = read-host -Prompt "Provide Software list path."
+	Write-Host "Found the following software lists."
 	Write-host
+	gci .\Profiles\*.lst -Name
+	Write-host
+	$softwareList = read-host -Prompt "Install with which list?"
 	Write-host "Software names are referenced from the Chocolatey repo."
 	Write-host "=== List Start ==="
 	foreach ($item in gc "$softwareList") {
@@ -92,7 +95,7 @@ Function installSoftware {
 	}
 	Write-host "=== List End ==="
 	Write-host
-	Write-Output "Is this list provided correct?"
+	Write-Output "Is the list provided correct? Proceed to install?"
 	$chocConfirm = read-host -Prompt "(y/n)"
 	if ($chocConfirm -eq "y") {
 		Write-Output "Commencing software install.."
