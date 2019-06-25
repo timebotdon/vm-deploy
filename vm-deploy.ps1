@@ -90,7 +90,7 @@ Function installSoftware {
 	$softwareList = read-host -Prompt "Install with which list?"
 	Write-host "Software names are referenced from the Chocolatey repo."
 	Write-host "=== List Start ==="
-	foreach ($item in gc "$softwareList") {
+	foreach ($item in gc ".\Profiles\$softwareList") {
 		Write-Output "$item"
 	}
 	Write-host "=== List End ==="
@@ -99,7 +99,7 @@ Function installSoftware {
 	$chocConfirm = read-host -Prompt "(y/n)"
 	if ($chocConfirm -eq "y") {
 		Write-Output "Commencing software install.."
-		foreach ($toInstall in gc $softwareList) {
+		foreach ($toInstall in gc ".\Profiles\$softwareList") {
 			Write-Output "Installing $item."
 		}
 		Write-Host "Installation complete."
