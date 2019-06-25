@@ -96,8 +96,7 @@ Function installSoftware {
 	$chocConfirm = read-host -Prompt "(y/n)"
 	if ($chocConfirm -eq "y") {
 		Write-Output "Commencing software install.."
-		foreach ($item in gc $software) {
-			choco install -y "$item" 
+		foreach ($toInstall in gc $softwareList) {
 			Write-Output "Installing $item."
 		}
 		Write-Host "Installation complete."
