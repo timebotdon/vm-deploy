@@ -1,5 +1,5 @@
 
-function elevateUAC {
+Function elevateUAC {
 	if (!([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]'Administrator')) {
 		Write-Host "This script requires administrator rights. Auto elevating in 5 seconds.."
 		Start-Sleep 5
@@ -12,51 +12,52 @@ function elevateUAC {
 ## Network Config
 
 Function setNetworking {
-	$networkCh = read-host -Prompt "Use Static/DHCP? (s/d)"
+	$networkCh = Read-Host -Prompt "Use Static/DHCP? (s/d)"
 	if ($networkCh -eq "s") {
 		Get-WmiObject win32_networkadapter -filter "netconnectionstatus = 2" | select Name
-		$interface = read-host -Prompt "Interface Name"
-		$ip = read-host -Prompt "IP Address"
-		$netmask = read-host -Prompt "Netmask"
-		$gateway = read-host -Prompt "Gateway Address"
-		$netConfirmS = read-host -Prompt "Confirm? (y/n)"
+		$interface = Read-Host -Prompt "Interface Name"
+		$ip = Read-Host -Prompt "IP Address"
+		$netmask = Read-Host -Prompt "Netmask"
+		$gateway = Read-Host -Prompt "Gateway Address"
+		$netConfirmS = Read-Host -Prompt "Confirm? (y/n)"
 		if ($netConfirmS -eq "y") {
 			netsh interface ip set address name="$interface" static $ip $netmask $gateway
-			Write-host "Testing network connection.."
+			Write-Host "Testing network connection.."
 			ping $gateway
 			if ($lastexitcode -eq "0") {
-				Write-host "Ping test successful."
+				Write-Host "Ping test successful. Returning to menu."
+				menu
 			}
 			else {
-				Write-host "Connection Error. Please check network settings / firewall rules!"
+				Write-Host "Connection Error - Please check network settings / firewall rules! Returning to menu."
 				menu
 			}
 		}
 	}
 	if ($networkCh -eq "d") {
 		Get-WmiObject win32_networkadapter -filter "netconnectionstatus = 2" | select Name
-		$interface = read-host -Prompt "Interface Name"
-		$netConfirmD = read-host -Prompt "Confirm? (y/n)"
+		$interface = Read-Host -Prompt "Interface Name"
+		$netConfirmD = Read-Host -Prompt "Confirm? (y/n)"
 		if ($netConfirmD -eq "y") {
 			netsh interface ip set address "$interface" dhcp
-			Write-host "Testing network connection.."
+			Write-Host "Testing network connection.."
 			ping $gateway
 			if ($lastexitcode -eq "0") {
-				Write-host "Ping test successful."
+				Write-Host "Ping test successful. Returning to menu."
+				menu
 			}
 			else {
-				Write-host "Connection Error. Please check network settings / firewall rules!"
+				Write-Host "Connection Error - Please check network settings / firewall rules! Returning to menu."
 				menu
 			}
 		}
 	}
-	menu
 }
 
 ## Domain
 
 Function joinDomain {
-	$domainName = read-host -Prompt "Domain Name?"
+	$domainName = Read-Host -Prompt "Domain Name?"
 	Add-Computer –DomainName $domainName –Credential (Get-Credential)
 	menu
 }
@@ -66,11 +67,11 @@ Function checkChoco {
 	Write-Host "Checking if chocolatey is installed."
 	choco --version
 	if ($lastexitcode -eq "0") {
-		write-host "Chocolatey is installed!"
+		Write-Host "Chocolatey is installed!"
 	} 
 	else {
 		Write-Host "Chocolatey is NOT installed. Running choco install script."
-		$chocInstall = Read-host -Prompt "Chocolatey is required for the rest of this proocedure. Do you want to install Chocolatey now? (y/n)"
+		$chocInstall = Read-Host -Prompt "Chocolatey is required for the rest of this proocedure. Do you want to install Chocolatey now? (y/n)"
 		if ($chocInstall -eq "y") {
 			Set-ExecutionPolicy Bypass -Scope Process -Force; iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
 		}
@@ -84,19 +85,19 @@ Function checkChoco {
 Function installSoftware {
 	checkChoco
 	Write-Host "Found the following software lists."
-	Write-host
+	Write-Host
 	gci .\Profiles\*.lst -Name
-	Write-host
-	$softwareList = read-host -Prompt "Install with which list?"
-	Write-host "Software names are referenced from the Chocolatey repo."
-	Write-host "=== List Start ==="
+	Write-Host
+	$softwareList = Read-Host -Prompt "Install with which list?"
+	Write-Host "Software names are referenced from the Chocolatey repo."
+	Write-Host "=== List Start ==="
 	foreach ($item in gc ".\Profiles\$softwareList") {
 		Write-Output "$item"
 	}
-	Write-host "=== List End ==="
-	Write-host
+	Write-Host "=== List End ==="
+	Write-Host
 	Write-Output "Is the list provided correct? Proceed to install?"
-	$chocConfirm = read-host -Prompt "(y/n)"
+	$chocConfirm = Read-Host -Prompt "(y/n)"
 	if ($chocConfirm -eq "y") {
 		Write-Output "Commencing software install.."
 		foreach ($toInstall in gc ".\Profiles\$softwareList") {
@@ -109,21 +110,104 @@ Function installSoftware {
 		Restart-Computer
 	}
 	else {
-		Write-host "Return to menu."
+		Write-Host "Returning to menu."
 		menu
 	}
 }
 
 
-function menu {
-	Write-host 
-	Write-host "Script for quick deployment of new virtual machines. Installs software using Chocolatey package manager."
-	Write-host "1. Configure networking"
-	Write-host "2. Install software"
-	Write-host "3. Join Domain"
-	Write-host "0. Exit"
-	Write-host
-	$menuCh = read-host -Prompt "Choose an option."
+Function installAD {
+	## https://medium.com/@eeubanks/install-ad-ds-dns-and-dhcp-using-powershell-on-windows-server-2016-ac331e5988a7
+	if (((Get-WindowsFeature -Name AD-Domain-Services).InstallState) -eq "Available") -and (((Get-WindowsFeature -Name DNS).InstallState) -eq "Available") {
+		$domainName = Read-Host -Prompt "Provide a Domain Name for root forest."
+		if (!$domainName) {
+			Write-Output "Installing Active Directory / DNS roles.."
+			Install-WindowsFeature -Name AD-Domain-Services -IncludeManagementTools
+			Install-ADDSForest -DomainName "$domainName"
+			Write-Output "Installation complete. Please configure settings from the Server Manager!"
+			menu
+		}
+		else {
+			Write-Host "Domain Name CANNOT be empty! Returning to menu."
+			menu
+		}
+	}
+	else {
+		Write-Host "AD / DNS role is already installed! Returning to menu."
+		menu
+	}
+}
+
+
+Function installDHCP {
+	## https://medium.com/@eeubanks/install-ad-ds-dns-and-dhcp-using-powershell-on-windows-server-2016-ac331e5988a7
+	if (((Get-WindowsFeature -Name DHCP).InstallState) -eq "Available") {
+		Install-WindowsFeature -Name DHCP -IncludeManagementTools
+		Write-Output "Installation complete. Please configure settings from the Server Manager!"
+		menu
+	}
+	else {
+		Write-Host "DHCP role is already installed! Returning to menu."
+		menu
+	}	
+}
+
+
+Function installWeb {
+	## https://docs.microsoft.com/en-us/powershell/module/servermanager/install-windowsfeature?view=winserver2012r2-ps
+	if (((Get-WindowsFeature -Name Web-Server).InstallState) -eq "Available") {
+		Install-WindowsFeature -Name Web-Server -IncludeManagementTools
+		Write-Output "Installation complete. Please configure settings from the Server Manager!"
+		menu
+	}
+	else {
+		Write-Host "Web-Server role is already installed! Returning to menu."
+		menu
+	}	
+}
+
+
+# Server roles Menu
+Function serverMenu {
+	if (((Get-WmiObject win32_operatingsystem).name).contains("Server") -eq "True") {
+		Write-Host
+		Write-Host "1. Acive Directory / DNS"
+		Write-Host "2. DHCP"
+		Write-Host "3. IIS Web Server"
+		Write-Host "0. Back to menu"
+		Write-Host
+		$serverCh = Read-Host -Prompt "Choose a server role."
+		
+		if ($serverCh -eq "1") {
+			installAD
+		}
+		if ($serverCh -eq "2") {
+			installDHCP
+		}
+		if ($serverCh -eq "3") {
+			installWeb
+		}	
+		if ($serverCh -eq "0") {
+			menu
+		}
+	}
+	else {
+		Write-Output "This isn't a Windows Server. Returning to menu."
+		menu
+	}
+}
+
+#Menu
+Function menu {
+	Write-Host 
+	Write-Host "Script for quick deployment of new virtual machines. Installs software using Chocolatey package manager."
+	Write-Host "1. Configure networking"
+	Write-Host "2. Install software"
+	Write-Host "3. Server Only - Configure Server Roles"
+	Write-Host "4. Join Domain"
+	Write-Host "0. Exit"
+	Write-Host
+	$menuCh = Read-Host -Prompt "Choose an option."
 	
 	if ($menuCh -eq "1") {
 		setNetworking
@@ -132,6 +216,9 @@ function menu {
 		installSoftware
 	}
 	if ($menuCh -eq "3") {
+		serverMenu
+	}	
+	if ($menuCh -eq "4") {
 		joinDomain
 	}
 	if ($menuCh -eq "0") {
@@ -140,7 +227,7 @@ function menu {
 }
 
 
-function init {
+Function init {
 	elevateUAC
 	menu
 }
