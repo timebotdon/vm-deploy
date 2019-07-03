@@ -118,7 +118,7 @@ Function installSoftware {
 
 Function installAD {
 	## https://medium.com/@eeubanks/install-ad-ds-dns-and-dhcp-using-powershell-on-windows-server-2016-ac331e5988a7
-	if (((Get-WindowsFeature -Name AD-Domain-Services).InstallState) -eq "Available") -and (((Get-WindowsFeature -Name DNS).InstallState) -eq "Available") {
+	if ((((Get-WindowsFeature -Name AD-Domain-Services).InstallState) -eq "Available") -and (((Get-WindowsFeature -Name DNS).InstallState) -eq "Available")) {
 		$domainName = Read-Host -Prompt "Provide a Domain Name for root forest."
 		if (!$domainName) {
 			Write-Output "Installing Active Directory / DNS roles.."
